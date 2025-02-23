@@ -76,7 +76,7 @@ public class DisplayNote {
         }
     }
 
-    private void displayNote(List<Note> notes) {
+    private void displayNote(List<DataToConn.Note> notes) {
 
         String toDisplay = "";
 
@@ -88,8 +88,8 @@ public class DisplayNote {
         JOptionPane.showMessageDialog(null, toDisplay);
     }
 
-    private List<Note> getListOfNotes(int choiceNumber, int number) {
-        List<Note> listOfNote = new ArrayList<>();
+    private List<DataToConn.Note> getListOfNotes(int choiceNumber, int number) {
+        List<DataToConn.Note> listOfNote = new ArrayList<>();
 
         try (
                 Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
@@ -105,7 +105,7 @@ public class DisplayNote {
             ResultSet resultSet = statement.executeQuery(query);
 
             while (resultSet.next()) {
-                Note note = new Note(
+                DataToConn.Note note = new DataToConn.Note(
                         Integer.parseInt(resultSet.getString("id_list")),
                         resultSet.getString("title"),
                         resultSet.getString("description"),
