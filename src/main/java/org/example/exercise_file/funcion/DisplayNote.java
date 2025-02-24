@@ -1,6 +1,7 @@
 package org.example.exercise_file.funcion;
 
 import org.example.exercise_file.DataToConn;
+import org.example.exercise_file.Note;
 
 import javax.swing.*;
 import java.sql.*;
@@ -76,20 +77,21 @@ public class DisplayNote {
         }
     }
 
-    private void displayNote(List<DataToConn.Note> notes) {
+    private void displayNote(List<Note> notes) {
 
         String toDisplay = "";
 
         for (int i = 0; i < notes.size(); i++) {
             toDisplay += "[" + notes.get(i).getId() + "] -> TITLE: " + notes.get(i).getTitle() + " | PRIORITY [" + notes.get(i).getPriority() + "]\n" +
-                    "\t" + notes.get(i).getDescription() + " | Must do to: " + notes.get(i).getDeadLine() + "\n";
+                    "\t" + notes.get(i).getDescription() + "\n" +
+                    "\tMust do to: " + notes.get(i).getDeadLine() + "\n";
         }
 
         JOptionPane.showMessageDialog(null, toDisplay);
     }
 
-    private List<DataToConn.Note> getListOfNotes(int choiceNumber, int number) {
-        List<DataToConn.Note> listOfNote = new ArrayList<>();
+    private List<Note> getListOfNotes(int choiceNumber, int number) {
+        List<Note> listOfNote = new ArrayList<>();
 
         try (
                 Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
@@ -105,7 +107,7 @@ public class DisplayNote {
             ResultSet resultSet = statement.executeQuery(query);
 
             while (resultSet.next()) {
-                DataToConn.Note note = new DataToConn.Note(
+                Note note = new Note(
                         Integer.parseInt(resultSet.getString("id_list")),
                         resultSet.getString("title"),
                         resultSet.getString("description"),
