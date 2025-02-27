@@ -9,6 +9,11 @@ public class Note {
     private LocalDate deadLine;
     private int priority;
 
+    public Note(int id, String title) {
+        this.id = id;
+        this.title = title;
+    }
+
     public Note(String title, String description, LocalDate deadLine, int priority) {
         this.title = title;
         this.description = description;

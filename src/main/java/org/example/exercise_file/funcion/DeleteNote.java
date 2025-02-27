@@ -1,6 +1,12 @@
 package org.example.exercise_file.funcion;
 
+import org.example.exercise_file.DataToConn;
+import org.example.exercise_file.Note;
+
 import javax.swing.*;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DeleteNote {
     public void deletePanel() {
@@ -8,7 +14,9 @@ public class DeleteNote {
 
         switch (choice) {
             case 1: {
-
+                int selectedNoteIdToDelete = displayAndSelectId();
+                deleteNoteById(selectedNoteIdToDelete);
+                //todo wprowadzić zabezpieczenie przed wpisaniem litery zamiast liczby odnoszącej sie do ID notatki
             }
             break;
             case 2: {
@@ -27,6 +35,68 @@ public class DeleteNote {
             }
 
         }
+    }
+
+    private void deleteNoteById(int selectedNoteIdToDelete) {
+        String deleteQuery ="DELETE FROM list WHERE id_list = ?";
+        try (
+                Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
+                PreparedStatement preparedStatement = connection.prepareStatement(deleteQuery);
+                ) {
+            preparedStatement.setInt(1, selectedNoteIdToDelete);
+            preparedStatement.executeUpdate();
+
+            connection.close();
+            preparedStatement.close();
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Error when deleting a note." + "\n" +
+                    "Error message: " + ex.getMessage() + "\n" +
+                    "SQL state: " + ex.getSQLState());
+        }
+    }
+
+    private int displayAndSelectId() {
+        List<Note> noteList = getNoteListFromDataBase();
+        StringBuilder build = new StringBuilder();
+
+        for (int i = 0; i < noteList.size(); i++) {
+            build.append("[").append(noteList.get(i).getId()).append("]")
+                    .append(" -> ").append(noteList.get(i).getTitle()).append("\n");
+        }
+        build.append("Select the note ID to delete this note: ");
+        int choice = Integer.parseInt(JOptionPane.showInputDialog(build.toString()));
+        return choice;
+    }
+
+    private List<Note> getNoteListFromDataBase() {
+        List<Note> noteList = new ArrayList<>();
+
+        try (
+                Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
+                Statement statement = connection.createStatement();
+        ) {
+            String query = "SELECT id_list, title FROM list;";
+            ResultSet resultSet = statement.executeQuery(query);
+
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id_list");
+                String title = resultSet.getString("title");
+
+                Note note = new Note(id, title);
+                noteList.add(note);
+            }
+
+            connection.close();
+            statement.close();
+            resultSet.close();
+
+            return noteList;
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Problem with display list, sorry for problem ...");
+        }
+        return noteList;
     }
 
     private int choiceDeletePanel() {
