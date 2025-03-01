@@ -28,13 +28,8 @@ public class DeleteNote {
 
             }
             break;
-            case 0: {
-                JOptionPane.showMessageDialog(null, "Back to main menu");
-            }
-            break;
             default: {
-                JOptionPane.showMessageDialog(null, "Something has gone wrong, the programme is closed");
-                System.exit(0);
+                System.out.println("back");
             }
 
         }
@@ -48,18 +43,22 @@ public class DeleteNote {
         ) {
 
             String query = "DELETE FROM list;";
-            ResultSet resultSet = statement.executeQuery(query);
+            int result = statement.executeUpdate(query);
 
-            JOptionPane.showMessageDialog(null, "All notes were successfully deleted.");
+            if (result > 0) {
+                JOptionPane.showMessageDialog(null, "All notes were successfully deleted.");
+            } else {
+                JOptionPane.showMessageDialog(null, "No notes to deleted.");
+            }
 
             connection.close();
             statement.close();
-            resultSet.close();
 
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null, "Error when deleting a note." + "\n" +
                     "Error message: " + ex.getMessage() + "\n" +
                     "SQL state: " + ex.getSQLState());
+            ex.printStackTrace();
         }
     }
 

@@ -66,13 +66,8 @@ public class DisplayNote {
                 }
             }
             break;
-            case 0: {
-                JOptionPane.showMessageDialog(null, "Back to main menu");
-            }
-            break;
             default: {
-                JOptionPane.showMessageDialog(null, "Something has gone wrong, the programme is closed");
-                System.exit(0);
+                System.out.println("back");
             }
         }
     }
