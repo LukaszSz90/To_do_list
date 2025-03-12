@@ -23,7 +23,13 @@ public class CreateNote {
             preparedStatement.setString(2, note.getDescription());
             preparedStatement.setDate(3, Date.valueOf(note.getDeadLine()));
             preparedStatement.setInt(4, note.getPriority());
-            preparedStatement.executeUpdate();
+            int result = preparedStatement.executeUpdate();
+
+            if (result > 0) {
+                JOptionPane.showMessageDialog(null, "Note is added.");
+            } else {
+                JOptionPane.showMessageDialog(null, "Note has not been added.");
+            }
 
             connection.close();
             preparedStatement.close();

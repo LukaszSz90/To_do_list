@@ -36,7 +36,6 @@ public class DeleteNote {
     }
 
     private void deleteAllNote() {
-        //todo - poprawic coś bo po usunięciu przechodzi do wyjątku
         try (
                 Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
                 Statement statement = connection.createStatement();
