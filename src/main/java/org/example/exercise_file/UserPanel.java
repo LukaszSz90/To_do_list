@@ -67,7 +67,7 @@ public class UserPanel {
 
     public static String displayMainPanel() {
         String textList = buildTextFromList();
-
+// todo Napisac ladne wyswietlanie listy notatek po tytulach
         String choice = JOptionPane.showInputDialog(
                 "Actual list to do:\n" +
                         textList + "\n" +

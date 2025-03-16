@@ -37,6 +37,7 @@ public class DisplayNote {
         //Panel to display all notes or a selected one
         switch (choiceNumber) {
             case 1: {
+                //todo opcja wyswietlenia wszystkiego jest do usunięcia
                 displayNote(getListOfNotes(choiceNumber, 0));
             }
             break;

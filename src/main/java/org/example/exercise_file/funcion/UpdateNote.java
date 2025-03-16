@@ -5,41 +5,31 @@ import org.example.exercise_file.Note;
 
 import javax.swing.*;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UpdateNote {
     public void updatePanel() {
         String choice = "";
+
         while (!choice.equals("0")) {
             choice = displayUpdatePanel();
 
+            if (!choice.equals("0")) {
             try {
-                int choiceNumber = Integer.parseInt(choice);
+                int selectedId = Integer.parseInt(choice);
+                if (selectedId >= 0 || isEnterCorrectId(selectedId)){
 
-                if (choiceNumber >= 0 || isEnterCorrectId(choiceNumber)) {
                     String subChoice = whatUpdatePanel();
-                    int subChoiceNumber = Integer.parseInt(subChoice);
+                    int selectedElementToUpdate = Integer.parseInt(subChoice);
 
-                    switch (subChoiceNumber) {
-                        case 1: {
-                            //update title
-                        }
-                        break;
-                        case 2: {
-                            //update description
-                        }
-                        break;
-                        case 3: {
-                            //update deadline
-                        }
-                        break;
-                        case 4: {
-                            //update priority
-                        } break;
-                        default: {
+                    int isUpdated = updateElementWithId(selectedId, selectedElementToUpdate);
 
-                        }
+                    if (isUpdated == 1) {
+                        JOptionPane.showMessageDialog(null, "Data update successful :)");
+                    } else {
+                        JOptionPane.showMessageDialog(null, "No update");
                     }
 
                 } else {
@@ -50,9 +40,108 @@ public class UpdateNote {
                 JOptionPane.showMessageDialog(null, "You entered  something else than number. Please Try again\n" +
                         "Message: " + "[" + ex.getMessage() + "]");
             }
+            }
         }
 
     }
+
+    private int updateElementWithId(int selectedId, int selectedElementToUpdate) {
+        switch (selectedElementToUpdate) {
+            case 1:
+            case 2: {
+                String query = "";
+                if (selectedElementToUpdate == 1) {
+                    query = "UPDATE list SET title = ? WHERE id_list = ?;";
+                } else {
+                    query = "UPDATE list SET description = ? WHERE id_list = ?;";
+                }
+
+                try(
+                        Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
+                        PreparedStatement preparedStatement = connection.prepareStatement(query);
+                        ) {
+                    String titleOrDescription = "";
+                    if (selectedElementToUpdate == 1) {
+                        titleOrDescription = JOptionPane.showInputDialog("Enter new title:");
+                    } else {
+                        titleOrDescription = JOptionPane.showInputDialog("Enter new description:");
+                    }
+
+                    preparedStatement.setString(1, titleOrDescription);
+                    preparedStatement.setInt(2, selectedId);
+                    int isUpdated = preparedStatement.executeUpdate();
+
+                    connection.close();
+                    preparedStatement.close();
+                    return isUpdated;
+
+                } catch (SQLException ex){
+                    JOptionPane.showMessageDialog(null, "Error when update note element." + "\n" +
+                            "Error message: " + ex.getMessage() + "\n" +
+                            "SQL state: " + ex.getSQLState());
+                }
+            } break;
+            case 3: {
+                //todo napisać zabezpieczenie przed wpisaniem złej daty
+                String query = "UPDATE list SET deadline = ? WHERE id_list = ?;";
+                try(
+                        Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
+                        PreparedStatement preparedStatement = connection.prepareStatement(query);
+                ) {
+                    String newDeadline = "";
+                    newDeadline = JOptionPane.showInputDialog("Enter new deadline (year-month-day):");
+                    LocalDate updateDeadline = LocalDate.parse(newDeadline);
+
+                    preparedStatement.setDate(1, Date.valueOf(updateDeadline));
+                    preparedStatement.setInt(2, selectedId);
+                    int isUpdated = preparedStatement.executeUpdate();
+
+                    connection.close();
+                    preparedStatement.close();
+                    return isUpdated;
+
+                } catch (SQLException ex){
+                    JOptionPane.showMessageDialog(null, "Error when update note element." + "\n" +
+                            "Error message: " + ex.getMessage() + "\n" +
+                            "SQL state: " + ex.getSQLState());
+                }
+            } break;
+            case 4: {
+                String query = "UPDATE list SET priority = ? WHERE id_list = ?;";
+                try(
+                        Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
+                        PreparedStatement preparedStatement = connection.prepareStatement(query);
+                ) {
+                    String newPriority = "";
+                    newPriority = JOptionPane.showInputDialog("Enter new priority:");
+                    int updatePriority = Integer.parseInt(newPriority);
+
+                    preparedStatement.setInt(1, updatePriority);
+                    preparedStatement.setInt(2, selectedId);
+                    int isUpdated = preparedStatement.executeUpdate();
+
+                    connection.close();
+                    preparedStatement.close();
+                    return isUpdated;
+
+                } catch (SQLException ex){
+                    JOptionPane.showMessageDialog(null, "Error when update note element." + "\n" +
+                            "Error message: " + ex.getMessage() + "\n" +
+                            "SQL state: " + ex.getSQLState());
+                } catch (NumberFormatException exc) {
+                    JOptionPane.showMessageDialog(null, "You entered  something else than number. Please Try again\n" +
+                            "Message: " + "[" + exc.getMessage() + "]");
+                }
+            } break;
+            default: {
+
+            }
+
+        }
+
+        return 0;
+    }
+
 
     private String whatUpdatePanel() {
         String choice = JOptionPane.showInputDialog(
@@ -78,17 +167,6 @@ public class UpdateNote {
         return false;
     }
 
-    private String createList() {
-        List<Note> list = getListOfNotes();
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < list.size(); i++) {
-            builder.append("[").append(list.get(i).getId()).append("]")
-                    .append(" - ").append(list.get(i).getTitle())
-                    .append("\n");
-        }
-        return builder.toString();
-    }
-
     private String displayUpdatePanel() {
         String listOfNotes = createList();
         String choice = JOptionPane.showInputDialog(
@@ -101,17 +179,15 @@ public class UpdateNote {
         return choice;
     }
 
-    private String buildTextFromList() {
-        List<Note> titleList = getListOfNotes();
-        String text = "";
-        int count = 1;
-
-        for (int i = 0; i < titleList.size(); i++) {
-            text += "[" + count + "] - " + titleList.get(i) + "\n";
-            count++;
+    private String createList() {
+        List<Note> list = getListOfNotes();
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < list.size(); i++) {
+            builder.append("[").append(list.get(i).getId()).append("]")
+                    .append(" - ").append(list.get(i).getTitle())
+                    .append("\n");
         }
-
-        return text;
+        return builder.toString();
     }
 
     private static List<Note> getListOfNotes() {
