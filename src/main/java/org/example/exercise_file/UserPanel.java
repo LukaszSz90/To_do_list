@@ -1,11 +1,16 @@
 package org.example.exercise_file;
 
+import com.sun.source.tree.BreakTree;
 import org.example.exercise_file.funcion.CreateNote;
 import org.example.exercise_file.funcion.DeleteNote;
 import org.example.exercise_file.funcion.DisplayNote;
 import org.example.exercise_file.funcion.UpdateNote;
 
 import javax.swing.*;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class UserPanel {
@@ -66,11 +71,9 @@ public class UserPanel {
     }
 
     public static String displayMainPanel() {
-        String textList = buildTextFromList();
-// todo Napisac ladne wyswietlanie listy notatek po tytulach
         String choice = JOptionPane.showInputDialog(
                 "Actual list to do:\n" +
-                        textList + "\n" +
+                        buildTextFromList() +
                         "--------------------------------------------\n" +
                         "What you want to do: \n" +
                         "[1] View details of note\n" +
@@ -83,17 +86,49 @@ public class UserPanel {
         return choice;
     }
 
-    private static String buildTextFromList() {
-        List<String> titleList = DisplayNote.getTitleList();
-        String text = "";
-        int count = 1;
+    public static String buildTextFromList() {
+        List<Note> titleList = getTitleList();
+
+        Comparator<Note> comparator = new Comparator<Note>() {
+            @Override
+            public int compare(Note o1, Note o2) {
+                return o1.getId() - o2.getId();
+            }
+        };
+
+        titleList.sort(comparator);
+
+        StringBuilder buildList = new StringBuilder();
 
         for (int i = 0; i < titleList.size(); i++) {
-            text += "[" + count + "] - " + titleList.get(i) + "\n";
-            count++;
+           buildList.append("[").append(titleList.get(i).getId()).append("] ")
+                   .append(titleList.get(i).getTitle()).append("\n");
         }
 
-        return text;
+        return buildList.toString();
+    }
+
+        private static List<Note> getTitleList() {
+        List<Note> list = new ArrayList<>();
+        try (
+                Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
+                Statement statement = connection.createStatement();
+        ) {
+            String query = "SELECT id_list, title FROM list;";
+            ResultSet resultSet = statement.executeQuery(query);
+
+            while (resultSet.next()) {
+                Note note = new Note(resultSet.getInt("id_list"), resultSet.getString("title"));
+                list.add(note);
+            }
+            resultSet.close();
+            connection.close();
+            statement.close();
+            return list;
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Problem with display list, sorry for problem ...");
+        }
+        return list;
     }
 
 }

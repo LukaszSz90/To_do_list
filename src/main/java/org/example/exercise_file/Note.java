@@ -48,4 +48,5 @@ public class Note {
     public int getPriority() {
         return priority;
     }
+
 }

@@ -2,12 +2,12 @@ package org.example.exercise_file.funcion;
 
 import org.example.exercise_file.DataToConn;
 import org.example.exercise_file.Note;
+import org.example.exercise_file.UserPanel;
 
 import javax.swing.*;
+import javax.xml.crypto.Data;
 import java.sql.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 public class DisplayNote {
 
@@ -17,12 +17,10 @@ public class DisplayNote {
             choice = displayNotePanel();
 
             try {
-                int choiceNumber = Integer.parseInt(choice);
-
-                if (choiceNumber >= 0 && choiceNumber <= 2) {
-                    actionDisplayPanel(choiceNumber);
-                } else {
-                    JOptionPane.showMessageDialog(null, "Entered wrong number of action, please try again.");
+                int selectedId = Integer.parseInt(choice);
+// todo zrobić zabezpieczenie do przed wprowadzeniem id nieistniejącego
+                if (selectedId > 0) {
+                    displayNote(selectedId);
                 }
 
             } catch (NumberFormatException ex) {
@@ -33,123 +31,60 @@ public class DisplayNote {
 
     }
 
-    private void actionDisplayPanel(int choiceNumber) {
-        //Panel to display all notes or a selected one
-        switch (choiceNumber) {
-            case 1: {
-                //todo opcja wyswietlenia wszystkiego jest do usunięcia
-                displayNote(getListOfNotes(choiceNumber, 0));
-            }
-            break;
-            case 2: {
-                try (
-                        Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
-                        Statement statement = connection.createStatement();
-                ) {
-                    String query = "";
-                    query += "SELECT id_list FROM list;";
-                    ResultSet resultSet = statement.executeQuery(query);
-                    List<Integer> idList = new ArrayList<>();
-
-                    while (resultSet.next()) {
-                        idList.add(resultSet.getInt("id_list"));
-                    }
-                    resultSet.close();
-                    connection.close();
-                    statement.close();
-
-                    int choiceID = Integer.parseInt(JOptionPane.showInputDialog(
-                            "Enable note id: " + idList.toString() + "\n" +
-                            "Enter id of not witch you want display: "));
-                    displayNote(getListOfNotes(choiceNumber, choiceID));
-                } catch (SQLException ex) {
-                    JOptionPane.showMessageDialog(null, "Problem with display list, sorry for problem ...");
-                }
-            }
-            break;
-            default: {
-                System.out.println("back");
-            }
-        }
-    }
-
-    private void displayNote(List<Note> notes) {
-
-        String toDisplay = "";
-
-        for (int i = 0; i < notes.size(); i++) {
-            toDisplay += "[" + notes.get(i).getId() + "] -> TITLE: " + notes.get(i).getTitle() + " | PRIORITY [" + notes.get(i).getPriority() + "]\n" +
-                    "\t" + notes.get(i).getDescription() + "\n" +
-                    "\tMust do to: " + notes.get(i).getDeadLine() + "\n";
-        }
-
-        JOptionPane.showMessageDialog(null, toDisplay);
-    }
-
-    private List<Note> getListOfNotes(int choiceNumber, int number) {
-        List<Note> listOfNote = new ArrayList<>();
-
-        try (
-                Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
-                Statement statement = connection.createStatement();
-        ) {
-            String query = "";
-            if (choiceNumber == 1) {
-                query += "SELECT id_list, title, description, deadline, priority FROM list;";
-            } else {
-                query += "SELECT id_list, title, description, deadline, priority FROM list WHERE id_list=" + number + ";";
-            }
-
-            ResultSet resultSet = statement.executeQuery(query);
-
-            while (resultSet.next()) {
-                Note note = new Note(
-                        Integer.parseInt(resultSet.getString("id_list")),
-                        resultSet.getString("title"),
-                        resultSet.getString("description"),
-                        LocalDate.parse(resultSet.getString("deadline")),
-                        Integer.parseInt(resultSet.getString("priority"))
-                );
-                listOfNote.add(note);
-            }
-            resultSet.close();
-            connection.close();
-            statement.close();
-            return listOfNote;
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(null, "Problem with display list, sorry for problem ...");
-        }
-        return listOfNote;
-    }
-
-    public static List<String> getTitleList() {
-        List<String> list = new ArrayList<>();
-        try (
-                Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
-                Statement statement = connection.createStatement();
-        ) {
-            String query = "SELECT title FROM list;";
-            ResultSet resultSet = statement.executeQuery(query);
-
-            while (resultSet.next()) {
-                list.add(resultSet.getString("title"));
-            }
-            resultSet.close();
-            connection.close();
-            statement.close();
-            return list;
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(null, "Problem with display list, sorry for problem ...");
-        }
-        return list;
-    }
-
     private String displayNotePanel() {
-        String choice = JOptionPane.showInputDialog("Enter command: \n" +
-                "[1] Display all notes with details\n" +
-                "[2] Display one note with details\n" +
-                "[0] Back"
+        String choice = JOptionPane.showInputDialog(
+                "Notes in database: \n" +
+                        UserPanel.buildTextFromList() +
+                        "=-------------------------------------\n" +
+                        "Command: \n" +
+                        "[1] Enter ID of note to view details\n" +
+                        "[0] Back"
         );
         return choice;
     }
+
+
+    private void displayNote(int selectedId) {
+        String query = "SELECT * FROM list WHERE id_list = " + selectedId + ";";
+
+        try (
+                Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
+                Statement statement = connection.createStatement();
+        ) {
+            ResultSet resultSet = statement.executeQuery(query);
+
+            Note note = null;
+
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id_list");
+                String title = resultSet.getString("title");
+                String description = resultSet.getString("description");
+                LocalDate deadline = resultSet.getDate("deadline").toLocalDate();
+                int priority = resultSet.getInt("priority");
+                note = new Note(id, title, description, deadline, priority);
+            }
+
+            resultSet.close();
+            connection.close();
+            statement.close();
+
+            StringBuilder buildText = new StringBuilder();
+
+            buildText.append("[").append(note.getId()).append("] -> ")
+                    .append(note.getTitle()).append("---").append(note.getDescription()).append("\n")
+                    .append("Deadline: ").append(note.getDeadLine()).append("\n")
+                    .append("Priority: ").append(note.getPriority()).append("\n");
+
+            JOptionPane.showMessageDialog(null, buildText.toString());
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Error when select note element." + "\n" +
+                    "Error message: " + ex.getMessage() + "\n" +
+                    "SQL state: " + ex.getSQLState());
+        }
+    }
+
+
 }
+
+
