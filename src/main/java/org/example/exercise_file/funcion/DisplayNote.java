@@ -5,22 +5,27 @@ import org.example.exercise_file.Note;
 import org.example.exercise_file.UserPanel;
 
 import javax.swing.*;
-import javax.xml.crypto.Data;
 import java.sql.*;
 import java.time.LocalDate;
+import java.util.ArrayList;
 
 public class DisplayNote {
 
     public void displayPanel() {
         String choice = "";
+        ArrayList<Integer> idList = getIdList();
         while (!choice.equals("0")) {
             choice = displayNotePanel();
 
             try {
                 int selectedId = Integer.parseInt(choice);
-// todo zrobić zabezpieczenie do przed wprowadzeniem id nieistniejącego
-                if (selectedId > 0) {
+
+                if (selectedId >= 0 && isIdExist(selectedId, idList)) {
                     displayNote(selectedId);
+                } else {
+                    if (selectedId != 0) {
+                        JOptionPane.showMessageDialog(null, "The ID you entered does not exist, try again.");
+                    }
                 }
 
             } catch (NumberFormatException ex) {
@@ -29,6 +34,43 @@ public class DisplayNote {
             }
         }
 
+    }
+
+    private boolean isIdExist(int selectedId, ArrayList<Integer> idList) {
+        for (int i = 0; i < idList.size(); i++) {
+            if (idList.get(i) == selectedId) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private ArrayList<Integer> getIdList() {
+        ArrayList<Integer> list = new ArrayList<>();
+
+        try (
+                Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
+                Statement statement = connection.createStatement();
+        ) {
+
+            String query = "SELECT id_list FROM list;";
+            ResultSet resultSet = statement.executeQuery(query);
+
+            while (resultSet.next()) {
+                list.add(resultSet.getInt("id_list"));
+            }
+
+            resultSet.close();
+            connection.close();
+            statement.close();
+
+            return list;
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Error when select note element." + "\n" +
+                    "Error message: " + ex.getMessage() + "\n" +
+                    "SQL state: " + ex.getSQLState());
+        }
+        return list;
     }
 
     private String displayNotePanel() {

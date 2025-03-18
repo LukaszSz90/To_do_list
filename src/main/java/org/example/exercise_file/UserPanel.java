@@ -1,6 +1,5 @@
 package org.example.exercise_file;
 
-import com.sun.source.tree.BreakTree;
 import org.example.exercise_file.funcion.CreateNote;
 import org.example.exercise_file.funcion.DeleteNote;
 import org.example.exercise_file.funcion.DisplayNote;
@@ -9,7 +8,6 @@ import org.example.exercise_file.funcion.UpdateNote;
 import javax.swing.*;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
