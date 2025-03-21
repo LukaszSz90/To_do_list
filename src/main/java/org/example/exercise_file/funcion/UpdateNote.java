@@ -5,6 +5,7 @@ import org.example.exercise_file.Note;
 
 import javax.swing.*;
 import java.sql.*;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +83,7 @@ public class UpdateNote {
                 }
             } break;
             case 3: {
-                //todo napisać zabezpieczenie przed wpisaniem złej daty
+                //todo skorygować wprowadzanie daty, która będzie rozbija na na częsci sprawdzana z osobna i wyrzuacany będzie błąd
                 String query = "UPDATE list SET deadline = ? WHERE id_list = ?;";
                 try(
                         Connection connection = DriverManager.getConnection(DataToConn.getURL(), DataToConn.getDataProperties());
@@ -90,6 +91,12 @@ public class UpdateNote {
                 ) {
                     String newDeadline = "";
                     newDeadline = JOptionPane.showInputDialog("Enter new deadline (year-month-day):");
+
+                    while (!checkIsFormatAndDateCorrect(newDeadline)) {
+                        newDeadline = JOptionPane.showInputDialog("The date entered has an incorrect format or the day/month is incorrect!\n" +
+                                "Enter deadline for completion of task again (date format: year-month-day).");
+                    }
+
                     LocalDate updateDeadline = LocalDate.parse(newDeadline);
 
                     preparedStatement.setDate(1, Date.valueOf(updateDeadline));
@@ -104,6 +111,11 @@ public class UpdateNote {
                     JOptionPane.showMessageDialog(null, "Error when update note element." + "\n" +
                             "Error message: " + ex.getMessage() + "\n" +
                             "SQL state: " + ex.getSQLState());
+                } catch (DateTimeException dte) {
+                    JOptionPane.showMessageDialog(null, "Entered illegal data to date format, try again.");
+                } catch (NumberFormatException exc) {
+                    JOptionPane.showMessageDialog(null, "You entered  something else than number. Please Try again\n" +
+                            "Message: " + "[" + exc.getMessage() + "]");
                 }
             } break;
             case 4: {
@@ -212,5 +224,20 @@ public class UpdateNote {
             JOptionPane.showMessageDialog(null, "Problem with display list, sorry for problem ...");
         }
         return list;
+    }
+
+    private boolean checkIsFormatAndDateCorrect(String deadlineString) {
+        boolean isFormatCorrect = deadlineString.matches("([0-9]{4})-([0-9]{2})-([0-9]{2})");
+        boolean isDateCorrect;
+        String[] date = deadlineString.split("-");
+
+        if (date.length < 3) {
+            isDateCorrect = false;
+        } else {
+            int monthCheck = Integer.parseInt(date[1]);
+            int dayCheck = Integer.parseInt(date[2]);
+            isDateCorrect = (monthCheck <= 12 && monthCheck >= 1) && (dayCheck <= 31 && dayCheck >= 1);
+        }
+        return isFormatCorrect && isDateCorrect;
     }
 }
